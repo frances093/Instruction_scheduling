@@ -147,7 +147,7 @@
             
 6. 若 RS 中尚有 instruction 則：
     檢查相應的 ALU 是否已被佔據，否則回傳 -1 。是，則：
-    找到可dispatch 的 unstruction，回傳此 instruction 的編號，並更新 track table。若沒有可 dispatch 的，則回傳 -1：
+    找到可dispatch 的 instruction，回傳此 instruction 的編號，並更新 track table。若沒有可 dispatch 的，則回傳 -1：
 
         int Dispatchadd(ALU *ptra, int nowissue)　或　
         int Dispatchmul(ALU *ptra, int nowissue)
@@ -156,14 +156,14 @@
 
             int forfirstin(RSX *ptrr, int nowissue)
         
-        用於找出目前 operant 接準備好且是準備好的 instruction 中最早進入的。
+        用於找出目前 operant 皆準備好，且是準備好的 instruction 中最早進入的。
 
             int putinD(RSX *ptrr, int rsx, ALU *ptra)
 
         用於將選到的 instruction 放入 ALU 中，並設定何時會完成計算（release），並回傳放入的 instruction 編號。
 
-7. 檢查 ALU 是否被佔據。否，則回傳 false 。是，則：
-     檢查目前 cycle 是否等於 release。否，則回傳 false 。是，則：
+7. 檢查 ALU 是否被佔據。否，則回傳 false 。是，則：  
+     檢查目前 cycle 是否等於 release。否，則回傳 false 。是，則：  
     計算此 instruction 的 outcome ，並將結果更新到 RAT、RF、RS 中等待此 data 的 instruction （如果需要），並更新 track table，並回傳 true：
 
         bool Writeback(ALU *ptra)
