@@ -40,9 +40,9 @@ vector<ALU*> alu;
 
 // RAT relate
 int RAT[8] = { -1, -1, -1, -1, -1, -1, -1, -1};
-	// -1: not waitiog any instruction, other: waitiog which RSX 
+	// -1: not waiting any instruction, other: waitiog which RSX 
 int RATgene[8] = { -1, -1, -1, -1, -1, -1, -1, -1};
-	// -1: not waitiog any instruction, other: ix of instruction this RAT is waiting
+	// -1: not waiting any instruction, other: ix of instruction this RAT is waiting
 
 // RF relate
 int regi[8] = { 0, 0, 0, 0, 0, 0, 0, 0};
@@ -50,7 +50,7 @@ int regi[8] = { 0, 0, 0, 0, 0, 0, 0, 0};
 // contral variable
 bool shouldexe = true;	// set false if there is unvalid input
 int nowcycle = 0;		// show now cycle
-int timecomsum[8] = {1, 1, 1, 1, 1, 1, 1, 1};	// show svery instruction need time
+int timecomsum[8] = {1, 1, 1, 1, 1, 1, 1, 1};	// show every instruction need time
 int numinaddRS = 0;		// show how much instruction is in add RS
 int numinmulRS = 0;		// show how much instruction is in mul RS
 
