@@ -451,8 +451,6 @@ void printstatus()
 
 void datacapture(RSX *ptrr)
 {
-	//cout << ptrr->inst_num << " / " << ptrr->inst_type << " / " << ptrr->op[0] << " / ";
-	//cout << ptrr->op[1] << " / " << ptrr->valid[0] << " / " << ptrr->valid[1] << endl;
 	//op2
 	if(ptrr->inst_type == 2 || ptrr->inst_type == 3 || ptrr->inst_type == 6 || ptrr->inst_type == 7)	// addi, subi, muli, divi
 	{
