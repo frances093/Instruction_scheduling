@@ -4,7 +4,8 @@
    * 同個 cycle 可同時執行 issue、dispatch、write back ，但不可對同個 instruction。
    * 這回合釋出的空間（RS 和 ALU）必須等下一個 cycle 才能被使用。
    * Dispatch 的回合也算在 ALU 運算時間內。
-   
+* 使用語言：C++。
+
 ## Input：
 * 檔案：（要和程式放在同一層） .txt 檔，裡面包含數個要執行的 instruction  。
 
