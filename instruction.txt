@@ -1,0 +1,28 @@
+.numofRS:
+add:3
+mul:2
+
+.Time:
+add:2
+sub:2
+mul:10
+div:40
+addi:2
+
+.Initial:
+R1=0
+R2=2
+R3=4
+R4=6
+R5=8
+
+.Code:
+I1:addi	R1, R2, 1
+I2:sub	R1, R3, R4
+I3:div	R1, R2, R3
+I4:mul	R2, R3, R4
+I5:add	R2, R4, R2
+I6:addi	R4, R1, 2
+I7:mul	R5, R5, R5
+I8:add	R1, R4, R4
+
