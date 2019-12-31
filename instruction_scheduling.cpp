@@ -778,7 +778,6 @@ int main(int argc, char **argv)
 	int nowissue = 0;
 	int temp;
 	bool shouldcout;
-	bool cdbempty;
 	int limit = 70;
 	
 	// set and get num. inst.
@@ -838,18 +837,13 @@ int main(int argc, char **argv)
 		}
 		
 		// Write back
-		cdbempty = true;
 		if(Writeback(alu[0]))
 		{
-			cdbempty = false;
 			shouldcout = true;	
 		}
-		if(cdbempty)
+		if(Writeback(alu[1]))
 		{
-			if(Writeback(alu[1]))
-			{
-				shouldcout = true;
-			}
+			shouldcout = true;
 		}
 		
 		// print now status
