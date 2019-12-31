@@ -690,12 +690,15 @@ int getoutcome(int type, int op1, int op2)
 	}
 }
 
-void broadcast(RSX *ptrr, int ix, int outcome)
+void broadcast(RSX *ptrr, int rsx, int outcome)
 {
 	for(int i = 0; i < 2; i++)
 	{
-		ptrr->valid[i] = -1;
-		ptrr->op[i] = outcome;
+		if(ptrr->op[i] == rsx && ptrr->valid[i] != -1)
+		{
+			ptrr->valid[i] = -1;
+			ptrr->op[i] = outcome;
+		}
 	}
 }
 
@@ -707,6 +710,7 @@ void releaseRS(RSX *ptrr)
 bool Writeback(ALU *ptra)
 {
 	int outcome;
+	int temp;
 	
 	if(!ptra->ALUoccupied)
 	{
@@ -721,18 +725,22 @@ bool Writeback(ALU *ptra)
 	outcome = getoutcome(ptra->ins_type, ptra->aluop[0], ptra->aluop[1]);
 	
 	// update register and RAT
-	RATgene[ptra->aludest] = -1;
-	RAT[ptra->aludest] = -1;
-	regi[ptra->aludest] = outcome;
+	if(RAT[ptra->aludest] == ptra->alurs)
+	{
+		RATgene[ptra->aludest] = -1;
+		RAT[ptra->aludest] = -1;
+		regi[ptra->aludest] = outcome;
+	}
 	
 	// update RS
 	for(int i = 0; i < addRS.size(); i++)
 	{
-		broadcast(addRS[i], ptra->ins_num, outcome);
+		broadcast(addRS[i], ptra->alurs, outcome);
 	}
 	for(int j = 0; j < mulRS.size(); j++)
 	{
-		broadcast(mulRS[j], ptra->ins_num, outcome);
+		temp = ptra->alurs - addRS.size();
+		broadcast(mulRS[j], temp, outcome);
 	}
 	
 	// release RSX
@@ -771,7 +779,7 @@ int main(int argc, char **argv)
 	int temp;
 	bool shouldcout;
 	bool cdbempty;
-	//int limit = 70;
+	int limit = 70;
 	
 	// set and get num. inst.
 	readfile();
@@ -836,7 +844,7 @@ int main(int argc, char **argv)
 			cdbempty = false;
 			shouldcout = true;	
 		}
-		if(cdbempty)		
+		if(cdbempty)
 		{
 			if(Writeback(alu[1]))
 			{
@@ -863,11 +871,11 @@ int main(int argc, char **argv)
 			break;
 		}
 		
-		//limit--;
-		//if(limit < 0)
-		//{
-		//	break;
-		//}
+		limit--;
+		if(limit < 0)
+		{
+			break;
+		}
 	}
 	system("pause");
 }
