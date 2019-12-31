@@ -836,9 +836,12 @@ int main(int argc, char **argv)
 			cdbempty = false;
 			shouldcout = true;	
 		}
-		if(Writeback(alu[1]) && cdbempty)
+		if(cdbempty)		
 		{
-			shouldcout = true;
+			if(Writeback(alu[1]))
+			{
+				shouldcout = true;
+			}
 		}
 		
 		// print now status
