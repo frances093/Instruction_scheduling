@@ -173,6 +173,10 @@
             int getoutcome(int type, int op1, int op2)
 
         用於得到此 instruction 的運算結果，並回傳。
+        
+            void releaseRS(RSX *ptrr)
+            
+        用於釋出此 instruction 佔用的 RS 。
 
             void broadcast(RSX *ptrr, int ix, int outcome)
 
