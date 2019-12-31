@@ -40,17 +40,18 @@ vector<ALU*> alu;
 
 // RAT relate
 int RAT[8] = { -1, -1, -1, -1, -1, -1, -1, -1};
-	// -1: not waiting any instruction, other: waitiog which RSX 
+	// -1: not waitiog any instruction, other: waitiog which RSX 
 int RATgene[8] = { -1, -1, -1, -1, -1, -1, -1, -1};
-	// -1: not waiting any instruction, other: ix of instruction this RAT is waiting
+	// -1: not waitiog any instruction, other: ix of instruction this RAT is waiting
 
 // RF relate
 int regi[8] = { 0, 0, 0, 0, 0, 0, 0, 0};
 
 // contral variable
 bool shouldexe = true;	// set false if there is unvalid input
+bool noexception = true;	// operation exception
 int nowcycle = 0;		// show now cycle
-int timecomsum[8] = {1, 1, 1, 1, 1, 1, 1, 1};	// show every instruction need time
+int timecomsum[8] = {1, 1, 1, 1, 1, 1, 1, 1};	// show svery instruction need time
 int numinaddRS = 0;		// show how much instruction is in add RS
 int numinmulRS = 0;		// show how much instruction is in mul RS
 
@@ -208,6 +209,7 @@ void assigntimecomsum(string line)
 void initialregister(string line)
 {	
 	int assign = -1;
+	bool neg = false;
 	string temp;
 	
 	for(int i = 0; i < line.size(); i++)
@@ -217,12 +219,24 @@ void initialregister(string line)
 			assign = findnum(temp);
 			temp.clear();
 		}
+		else if(line[i] == '-')
+		{
+			neg = true;
+		}
 		else
 		{
 			temp = temp + line[i];
 		}
 	}
-	regi[assign] = getnum(temp);
+	
+	if(neg)
+	{
+		regi[assign] = 0 - getnum(temp);
+	}
+	else
+	{
+		regi[assign] = getnum(temp);
+	}
 }
 
 void storeinstruction(string line)
@@ -576,8 +590,6 @@ int putinD(RSX *ptrr, int rsx, ALU *ptra)
 	ptra->aluop[1] = ptrr->op[1];
 	ptra->aludest = ptrr->dest;
 	
-	ptrr->occupied = false;
-	
 	return ptra->ins_num;
 } 
 
@@ -631,7 +643,7 @@ int Dispatchmul(ALU *ptra, int nowissue)
 		}
 	}
 	
-	if(position == -1)
+	if(position == -1)		// no instruction is ready
 	{
 		return -1;
 	}
@@ -656,10 +668,24 @@ int getoutcome(int type, int op1, int op2)
 	case 4:
 		return op1 * op2;
 	case 5:
+		if(op2 == 0)
+		{
+			cout << "!!!!!!!! nonvalid outcome!!!!!!!!!!!" << endl;
+			cout << op1 << " " << getsign(type) << " " << op2 << endl;
+			noexception = false;
+			return 0;
+		}
 		return op1 / op2;
 	case 6:
 		return op1 * op2;
 	case 7:
+		if(op2 == 0)
+		{
+			cout << "!!!!!!!! nonvalid outcome!!!!!!!!!!!" << endl;
+			cout << op1 << " " << getsign(type) << " " << op2 << endl;
+			noexception = false;
+			return 0;
+		}
 		return op1 / op2;
 	}
 }
@@ -668,12 +694,14 @@ void broadcast(RSX *ptrr, int ix, int outcome)
 {
 	for(int i = 0; i < 2; i++)
 	{
-		if(ptrr->valid[i] == ix)
-		{
-			ptrr->valid[i] = -1;
-			ptrr->op[i] = outcome;
-		}
+		ptrr->valid[i] = -1;
+		ptrr->op[i] = outcome;
 	}
+}
+
+void releaseRS(RSX *ptrr)
+{
+	ptrr->occupied = false;
 }
 
 bool Writeback(ALU *ptra)
@@ -693,12 +721,9 @@ bool Writeback(ALU *ptra)
 	outcome = getoutcome(ptra->ins_type, ptra->aluop[0], ptra->aluop[1]);
 	
 	// update register and RAT
-	if(RATgene[ptra->aludest]== ptra->ins_num)
-	{
-		RATgene[ptra->aludest] = -1;
-		RAT[ptra->aludest] = -1;
-		regi[ptra->aludest] = outcome;
-	}
+	RATgene[ptra->aludest] = -1;
+	RAT[ptra->aludest] = -1;
+	regi[ptra->aludest] = outcome;
 	
 	// update RS
 	for(int i = 0; i < addRS.size(); i++)
@@ -708,6 +733,16 @@ bool Writeback(ALU *ptra)
 	for(int j = 0; j < mulRS.size(); j++)
 	{
 		broadcast(mulRS[j], ptra->ins_num, outcome);
+	}
+	
+	// release RSX
+	if(ptra->ins_type < 4)		// +, -
+	{
+		releaseRS(addRS[ptra->alurs]);
+	}
+	else						// *, /
+	{
+		releaseRS(mulRS[ptra->alurs - addRS.size()]);
 	}
 	
 	cout << "Write back: I" << ptra->ins_num <<"(=" << outcome << ")" << endl;
@@ -735,6 +770,8 @@ int main(int argc, char **argv)
 	int nowissue = 0;
 	int temp;
 	bool shouldcout;
+	bool cdbempty;
+	//int limit = 70;
 	
 	// set and get num. inst.
 	readfile();
@@ -745,7 +782,7 @@ int main(int argc, char **argv)
 	// generate alu
 	generateALU(2);
 	
-	while(shouldexe)
+	while(shouldexe && noexception)
 	{
 		nowcycle++;
 		shouldcout = false;
@@ -793,11 +830,13 @@ int main(int argc, char **argv)
 		}
 		
 		// Write back
+		cdbempty = true;
 		if(Writeback(alu[0]))
 		{
+			cdbempty = false;
 			shouldcout = true;	
 		}
-		if(Writeback(alu[1]))
+		if(Writeback(alu[1]) && cdbempty)
 		{
 			shouldcout = true;
 		}
@@ -820,6 +859,12 @@ int main(int argc, char **argv)
 			outputtracktable();
 			break;
 		}
+		
+		//limit--;
+		//if(limit < 0)
+		//{
+		//	break;
+		//}
 	}
 	system("pause");
 }
