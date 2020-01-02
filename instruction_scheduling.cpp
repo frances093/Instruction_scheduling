@@ -284,7 +284,7 @@ void readfile()
 	string line;
 	int datatype = 0;
 	
-	file.open("instruction.txt", ios::in);
+	file.open("instruction_new.txt", ios::in);
 	if (file.is_open())
 	{
 		while(getline(file, line))
@@ -710,7 +710,6 @@ void releaseRS(RSX *ptrr)
 bool Writeback(ALU *ptra)
 {
 	int outcome;
-	int temp;
 	
 	if(!ptra->ALUoccupied)
 	{
@@ -739,8 +738,7 @@ bool Writeback(ALU *ptra)
 	}
 	for(int j = 0; j < mulRS.size(); j++)
 	{
-		temp = ptra->alurs - addRS.size();
-		broadcast(mulRS[j], temp, outcome);
+		broadcast(mulRS[j], ptra->alurs, outcome);
 	}
 	
 	// release RSX
@@ -778,7 +776,8 @@ int main(int argc, char **argv)
 	int nowissue = 0;
 	int temp;
 	bool shouldcout;
-	int limit = 70;
+	bool cdbempty;
+	int limit = 30;
 	
 	// set and get num. inst.
 	readfile();
@@ -837,13 +836,18 @@ int main(int argc, char **argv)
 		}
 		
 		// Write back
+		cdbempty = true;
 		if(Writeback(alu[0]))
 		{
+			cdbempty = false;
 			shouldcout = true;	
 		}
-		if(Writeback(alu[1]))
+		if(cdbempty)
 		{
-			shouldcout = true;
+			if(Writeback(alu[1]))
+			{
+				shouldcout = true;
+			}
 		}
 		
 		// print now status
