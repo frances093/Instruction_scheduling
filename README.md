@@ -1,9 +1,10 @@
 # Instruction_scheduling  
 ## 簡介：  
 * 實作 Tomasulo。
+   * 不包含 ROB 。
    * 同個 cycle 可同時執行 issue、dispatch、write back ，但不可對同個 instruction。
    * 這回合釋出的空間（RS 和 ALU）必須等下一個 cycle 才能被使用。
-   * Dispatch 的回合也算在 ALU 運算時間內。
+   * Dispatch 的回合也算在 ALU 運算時間內，write back 在運算時間的最後一 cycle 執行。
 * 使用語言：C++。
 
 ## Input：
