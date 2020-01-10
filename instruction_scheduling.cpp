@@ -102,7 +102,7 @@ int getnum(string a)
 	string temp;
 	for(int k = 0; k < a.size() ;k++)
 	{
-		if(int(a[k]) > 57 || a[k] < 48)			// not number
+		if(int(a[k]) > 57 || int(a[k]) < 48)			// not number
 		{
 			return findnum(a);
 		}
