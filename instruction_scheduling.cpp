@@ -31,10 +31,7 @@ struct ALU
 	bool ALUoccupied;	// true = can not put in new instruction
 	int release;		// which cycle will ALU be released
 	int alurs;			// this istruction is from which RS
-	int ins_num;		// ix
-	int ins_type;		// type of this instruction
-	int aluop[2];		// operant of this instruction
-	int aludest;		// destination of this instruction
+	RSX* position;		// point to position 
 };
 vector<ALU*> alu;
 
@@ -284,7 +281,7 @@ void readfile()
 	string line;
 	int datatype = 0;
 	
-	file.open("instruction_new.txt", ios::in);
+	file.open("instruction.txt", ios::in);
 	if (file.is_open())
 	{
 		while(getline(file, line))
@@ -405,10 +402,11 @@ void printALU(ALU *ptra)
 {
 	if(ptra->ALUoccupied)		// not empty
 	{
+		RSX *ptrr = ptra->position;
 		cout << "(RS" << ptra->alurs <<")	";
-		cout << "I" << ptra->ins_num << ": ";
+		cout << "I" << ptrr->inst_num << ": ";
 		//			op1						sign						op2
-		cout << ptra->aluop[0] << " " << getsign(ptra->ins_type) << " " << ptra->aluop[1] << endl;
+		cout << ptrr->op[0] << " " << getsign(ptrr->inst_type) << " " << ptrr->op[1] << endl;
 		cout << "release cycle: " << ptra->release << endl;
 	}
 	else						// is empty
@@ -584,13 +582,9 @@ int putinD(RSX *ptrr, int rsx, ALU *ptra)
 	ptra->release = nowcycle + timecomsum[ptrr->inst_type] - 1;
 	
 	ptra->alurs = rsx;
-	ptra->ins_num = ptrr->inst_num;
-	ptra->ins_type = ptrr->inst_type;
-	ptra->aluop[0] = ptrr->op[0];
-	ptra->aluop[1] = ptrr->op[1];
-	ptra->aludest = ptrr->dest;
+	ptra->position = ptrr;
 	
-	return ptra->ins_num;
+	return ptrr->inst_num;
 } 
 
 int Dispatchadd(ALU *ptra, int nowissue)
@@ -653,40 +647,38 @@ int Dispatchmul(ALU *ptra, int nowissue)
 
 //================== Write back ===========================
 
-int getoutcome(int type, int op1, int op2)
+int getoutcome(RSX *ptrr)
 {
-	switch(type)
+	switch(ptrr->inst_type)
 	{
 	case 0:
-		return op1 + op2;
+		return ptrr->op[0] + ptrr->op[1];
 	case 1:
-		return op1 - op2;
+		return ptrr->op[0] - ptrr->op[1];
 	case 2:
-		return op1 + op2;
+		return ptrr->op[0] + ptrr->op[1];
 	case 3:
-		return op1 - op2;
+		return ptrr->op[0] - ptrr->op[1];
 	case 4:
-		return op1 * op2;
+		return ptrr->op[0] * ptrr->op[1];
 	case 5:
-		if(op2 == 0)
+		if(ptrr->op[1] == 0)
 		{
 			cout << "!!!!!!!! nonvalid outcome!!!!!!!!!!!" << endl;
-			cout << op1 << " " << getsign(type) << " " << op2 << endl;
 			noexception = false;
 			return 0;
 		}
-		return op1 / op2;
+		return ptrr->op[0] / ptrr->op[1];
 	case 6:
-		return op1 * op2;
+		return ptrr->op[0] * ptrr->op[1];
 	case 7:
-		if(op2 == 0)
+		if(ptrr->op[1] == 0)
 		{
 			cout << "!!!!!!!! nonvalid outcome!!!!!!!!!!!" << endl;
-			cout << op1 << " " << getsign(type) << " " << op2 << endl;
 			noexception = false;
 			return 0;
 		}
-		return op1 / op2;
+		return ptrr->op[0] / ptrr->op[1];
 	}
 }
 
@@ -702,11 +694,6 @@ void broadcast(RSX *ptrr, int rsx, int outcome)
 	}
 }
 
-void releaseRS(RSX *ptrr)
-{
-	ptrr->occupied = false;
-}
-
 bool Writeback(ALU *ptra)
 {
 	int outcome;
@@ -714,21 +701,21 @@ bool Writeback(ALU *ptra)
 	if(!ptra->ALUoccupied)
 	{
 		return false;
-	}
+	}						// no instruction is executing
 	
 	if(ptra->release != nowcycle)
 	{
-		return false;
+		return false;		// still executing
 	}
 	
-	outcome = getoutcome(ptra->ins_type, ptra->aluop[0], ptra->aluop[1]);
+	outcome = getoutcome(ptra->position);
 	
 	// update register and RAT
-	if(RAT[ptra->aludest] == ptra->alurs)
+	if(RAT[ptra->position->dest] == ptra->alurs)
 	{
-		RATgene[ptra->aludest] = -1;
-		RAT[ptra->aludest] = -1;
-		regi[ptra->aludest] = outcome;
+		RATgene[ptra->position->dest] = -1;
+		RAT[ptra->position->dest] = -1;
+		regi[ptra->position->dest] = outcome;
 	}
 	
 	// update RS
@@ -742,17 +729,10 @@ bool Writeback(ALU *ptra)
 	}
 	
 	// release RSX
-	if(ptra->ins_type < 4)		// +, -
-	{
-		releaseRS(addRS[ptra->alurs]);
-	}
-	else						// *, /
-	{
-		releaseRS(mulRS[ptra->alurs - addRS.size()]);
-	}
+	ptra->position->occupied = false;
 	
-	cout << "Write back: I" << ptra->ins_num <<"(=" << outcome << ")" << endl;
-	updatetracktable(2, ptra->ins_num);
+	cout << "Write back: I" << ptra->position->inst_num <<"(=" << outcome << ")" << endl;
+	updatetracktable(2, ptra->position->inst_num);
 	
 	ptra->ALUoccupied = false;
 	
@@ -777,7 +757,7 @@ int main(int argc, char **argv)
 	int temp;
 	bool shouldcout;
 	bool cdbempty;
-	int limit = 30;
+	int limit = 70;
 	
 	// set and get num. inst.
 	readfile();
