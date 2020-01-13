@@ -165,7 +165,7 @@
 
 7. 檢查 ALU 是否被佔據。否，則回傳 false 。是，則：  
      檢查目前 cycle 是否等於 release。否，則回傳 false 。是，則：  
-    計算此 instruction 的 outcome ，並將結果更新到 RAT、RF、RS 中等待此 data 的 instruction （如果需要），並更新 track table，並回傳 true：
+    計算此 instruction 的 outcome ，並將結果更新到 RAT、RF、RS 中等待此 data 的 instruction （如果需要），並更新 track table、釋出此 instruction 佔用的 RS 、回傳 true：
 
         bool Writeback(ALU *ptra)
 
@@ -174,10 +174,6 @@
             int getoutcome(int type, int op1, int op2)
 
         用於得到此 instruction 的運算結果，並回傳。
-        
-            void releaseRS(RSX *ptrr)
-            
-        用於釋出此 instruction 佔用的 RS 。
 
             void broadcast(RSX *ptrr, int ix, int outcome)
 
